@@ -1,0 +1,117 @@
+<% layout("/layouts/boilerplate") %>
+
+<div class="row mt-3">
+  <div class="col-8 offset-2">
+    <h3><%= listing.title %></h3>
+  </div>
+
+  <div class="card col-6 offset-3 show card">
+    <img
+      src="<%= listing.image
+        ? (typeof listing.image === 'string' ? listing.image : listing.image.url)
+        : 'https://via.placeholder.com/600x400?text=No+Image' %>"
+      class="card-img-top show-img"
+      alt="Listing Image"
+    />
+
+    <div class="card-body">
+      <p class="card-text">Owned by <i><%= listing.owner.username %></i></p>
+      <p class="card-text"><%= listing.description %></p>
+      <p class="card-text">&#8377;<%= listing.price ? listing.price.toLocaleString("en-IN") : "N/A" %></p>
+      <p class="card-text"><%= listing.location %></p>
+      <p class="card-text"><%= listing.country %></p>
+    </div>
+  </div>
+</div>
+
+<!-- Edit & Delete Buttons -->
+<% if (currUser && listing.owner && listing.owner._id.toString() === currUser._id.toString()) { %>
+<div class="row mt-3">
+  <div class="col-6 offset-3 d-flex gap-3 justify-content-center">
+
+    <a href="/listings/<%= listing._id %>/edit" class="btn btn-danger">Edit</a>
+
+    <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE">
+      <button class="btn btn-dark">Delete</button>
+    </form>
+
+  </div>
+</div>
+<% } %>
+
+<!-- Review Section -->
+<div class="row mt-4">
+  <div class="col-8 offset-3 mb-3">
+
+    <hr />
+
+    <% if (currUser) { %>
+      <h4>Leave a Review</h4>
+      <form action="/listings/<%= listing._id %>/reviews" method="POST" novalidate class="needs-validation">
+
+        <fieldset class="starability-slot">
+          <legend>Rating:</legend>
+          <% for (let i = 1; i <= 5; i++) { %>
+            <input type="radio" name="review[rating]" value="<%= i %>" <%= i === 1 ? 'checked' : '' %> />
+            <label><%= i %> star<%= i > 1 ? 's' : '' %></label>
+          <% } %>
+        </fieldset>
+
+        <div class="mb-3 mt-3">
+          <label class="form-label">Comments</label>
+          <textarea name="review[comment]" cols="30" rows="5" class="form-control" required></textarea>
+          <div class="invalid-feedback">Please add some comments for review</div>
+        </div>
+
+        <button class="btn btn-outline-dark">Submit</button>
+      </form>
+
+      <hr/>
+    <% } %>
+
+    <!-- ✅ FIXED -->
+    <% if (listing.reviews.length > 0) { %>
+      <p><b>All Reviews</b></p>
+      <div class="row">
+        <% for (let review of listing.reviews) { %>
+          <div class="card col-5 ms-3 mb-3">
+            <div class="card-body">
+              <h5 class="card-title">@<%= review.author.username %></h5>
+              <p class="starability-result card-text" data-rating="<%= review.rating %>"></p>
+              <p class="card-text"><%= review.comment %></p>
+            </div>
+
+            <form method="POST" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
+              <button class="btn btn-sm btn-dark">Delete</button>
+            </form>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+
+    <!-- Map -->
+    <div class="col-6 offset-3 mb-3">
+      <h3>Where you'll be</h3>
+      <div id="map" style="height: 300px;"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let mapToken = "<%= mapToken %>";
+  console.log(mapToken);
+  mapboxgl.accessToken = mapToken;
+
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: [77.2090, 28.6139], // Delhi (for testing)
+    zoom: 9
+  });
+
+  // Optional marker
+  new mapboxgl.Marker()
+    .setLngLat([77.2090, 28.6139])
+    .addTo(map);
+</script> 
